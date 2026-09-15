@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 export default function Auth({ onAuthSuccess, onBack }) {
   const [isLogin, setIsLogin] = useState(true);
   const [name, setName] = useState("");
@@ -19,7 +21,7 @@ export default function Auth({ onAuthSuccess, onBack }) {
     if (isLogin) {
       // 1. SIGN IN FLOW -> redirects to Dashboard
       try {
-        const res = await fetch("http://localhost:5000/api/auth/login", {
+        const res = await fetch(`${API_BASE}/api/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
@@ -40,7 +42,7 @@ export default function Auth({ onAuthSuccess, onBack }) {
     } else {
       // 2. CREATE ACCOUNT FLOW -> creates account, does NOT go to dashboard, switches to Sign In
       try {
-        const res = await fetch("http://localhost:5000/api/auth/signup", {
+        const res = await fetch(`${API_BASE}/api/auth/signup`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

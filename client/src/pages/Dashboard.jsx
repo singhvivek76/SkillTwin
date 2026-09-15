@@ -3,6 +3,8 @@ import { SkillBar } from "../components/SkillBar";
 import { SkillGraph } from "../components/SkillGraph";
 import { SkillRadar, ProgressChart } from "../components/SkillCharts";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 const GITHUB_REPO_REGEX = /^(https?:\/\/)?(www\.)?github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+/;
 
 export default function Dashboard({ user: initialUser, onLogout }) {
@@ -62,7 +64,7 @@ export default function Dashboard({ user: initialUser, onLogout }) {
     setError(null);
     try {
       const token = localStorage.getItem("skilltwin_token");
-      const res = await fetch("http://localhost:5000/api/auth/profile", {
+      const res = await fetch(`${API_BASE}/api/auth/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -99,7 +101,7 @@ export default function Dashboard({ user: initialUser, onLogout }) {
 
     try {
       const token = localStorage.getItem("skilltwin_token");
-      const res = await fetch("http://localhost:5000/api/analyze", {
+      const res = await fetch(`${API_BASE}/api/analyze`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -233,7 +235,7 @@ export default function Dashboard({ user: initialUser, onLogout }) {
 
     try {
       const token = localStorage.getItem("skilltwin_token");
-      const res = await fetch("http://localhost:5000/api/challenge/solve", {
+      const res = await fetch(`${API_BASE}/api/challenge/solve`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
