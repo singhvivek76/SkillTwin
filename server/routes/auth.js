@@ -3,14 +3,16 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const authMiddleware = require("../middleware/auth");
+const mongoose = require('mongoose');
 
 function generateToken(user) {
   return jwt.sign(
     { id: user._id, userId: user._id, email: user.email },
-    process.env.JWT_SECRET || "skilltwin_super_secret_jwt_key_2026",
+    process.env.JWT_SECRET,
     { expiresIn: "7d" }
   );
 }
+//|| "skilltwin_super_secret_jwt_key_2026",
 
 // POST /api/auth/signup
 router.post("/signup", async (req, res) => {
@@ -89,37 +91,82 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// PUT /api/auth/profile
-router.put("/profile", authMiddleware, async (req, res) => {
-  try {
-    const targetId = req.user?.id || req.user?.userId;
-    const { name, fullName, college } = req.body;
-    const updatedName = name || fullName;
 
-    const user = await User.findById(targetId);
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
+router.put('/profile', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user?.id || req.user?.userId || req.user?._id;
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: 'Invalid session. Please sign out and sign in again.' });
     }
 
-    if (updatedName) user.name = updatedName;
-    if (college !== undefined) user.college = college;
+    const { name, fullName, college, branch } = req.body;
 
-    await user.save();
+    const updates = {};
+    if (name || fullName) {
+      updates.name = (name || fullName).trim();
+    }
+    if (college !== undefined || branch !== undefined) {
+      updates.college = (college || branch || '').trim();
+    }
 
-    res.json({
-      success: true,
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updates },
+      { new: true, runValidators: false }
+    ).select('-password');
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found in database.' });
+    }
+
+    return res.json({
+      message: 'Profile updated successfully',
       user: {
-        id: user._id,
-        name: user.name,
-        fullName: user.name,
-        email: user.email,
-        college: user.college
+        id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        college: updatedUser.college
       }
     });
   } catch (err) {
-    console.error("Profile update error:", err);
-    res.status(500).json({ error: "Failed to update profile" });
+    console.error('[Profile Update Error]:', err);
+    return res.status(500).json({ message: err.message || 'Server error updating profile' });
   }
 });
+
+
+// // PUT /api/auth/profile
+// router.put("/profile", authMiddleware, async (req, res) => {
+//   try {
+//     const targetId = req.user?.id || req.user?.userId;
+//     const { name, fullName, college } = req.body;
+//     const updatedName = name || fullName;
+
+//     const user = await User.findById(targetId);
+//     if (!user) {
+//       return res.status(404).json({ error: "User not found" });
+//     }
+
+//     if (updatedName) user.name = updatedName;
+//     if (college !== undefined) user.college = college;
+
+//     await user.save();
+
+//     res.json({
+//       success: true,
+//       user: {
+//         id: user._id,
+//         name: user.name,
+//         fullName: user.name,
+//         email: user.email,
+//         college: user.college
+//       }
+//     });
+//   } catch (err) {
+//     console.error("Profile update error:", err);
+//     res.status(500).json({ error: "Failed to update profile" });
+//   }
+// });
 
 module.exports = router;
